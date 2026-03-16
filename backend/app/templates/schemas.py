@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -24,6 +25,25 @@ class AppFromTemplateRequest(BaseModel):
 class SaveAsTemplateRequest(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     category: str = Field(default="general", max_length=60)
+
+
+# ── Sprint-6 AppTemplate catalog schemas ─────────────────────────────────────
+
+class AppTemplateResponse(BaseModel):
+    """Response schema for the new app_templates catalog (Sprint 6)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: str
+    description: Optional[str] = None
+    category: str
+    thumbnail: Optional[str] = None
+    layout_json: dict
+
+
+class TemplateListResponse(BaseModel):
+    templates: list[AppTemplateResponse]
 
 
 # ── Built-in template definitions ────────────────────────────────────────────

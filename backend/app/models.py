@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -64,6 +64,16 @@ class ToolApp(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    is_published: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    slug: Mapped[str | None] = mapped_column(
+        String(100), unique=True, nullable=True
     )
 
     owner: Mapped[User] = relationship(back_populates="apps")
@@ -261,3 +271,28 @@ class AppInvite(Base):
 
     app: Mapped["ToolApp"] = relationship(back_populates="invites")
     inviter: Mapped["User | None"] = relationship(foreign_keys=[created_by])
+
+
+class AppTemplate(Base):
+    """Sprint-6 curated template catalog (app_templates table)."""
+
+    __tablename__ = "app_templates"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid4()),
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    thumbnail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    layout_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

@@ -10,9 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.apps.schemas import AppResponse
 from app.auth.dependencies import get_current_user
 from app.db import get_db_session
-from app.models import AppMember, Page, Template, ToolApp, User
+from app.models import AppMember, AppTemplate, Page, Template, ToolApp, User
 from app.templates.schemas import (
     AppFromTemplateRequest,
+    AppTemplateResponse,
     SEED_TEMPLATES,
     TemplateResponse,
 )
@@ -28,6 +29,19 @@ async def _ensure_seeds(db: AsyncSession) -> None:
     for seed in SEED_TEMPLATES:
         db.add(Template(**seed))
     await db.commit()
+
+
+@router.get("/catalog", response_model=list[AppTemplateResponse])
+async def list_public_templates(
+    db: AsyncSession = Depends(get_db_session),
+) -> list[AppTemplateResponse]:
+    """Public endpoint — returns active AppTemplate catalog (no auth required)."""
+    rows = await db.scalars(
+        select(AppTemplate)
+        .where(AppTemplate.is_active.is_(True))
+        .order_by(AppTemplate.name)
+    )
+    return [AppTemplateResponse.model_validate(t) for t in rows]
 
 
 @router.get("", response_model=list[TemplateResponse])

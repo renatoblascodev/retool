@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     smtp_from: str = "noreply@toolstack.dev"
     # Frontend URL for invite links
     frontend_url: str = "http://localhost:5173"
+    # AI rate limits
+    ai_rate_limit_generate: str = "10/minute"
+    ai_rate_limit_suggest: str = "20/minute"
 
 
 @lru_cache

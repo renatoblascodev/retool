@@ -1,11 +1,9 @@
 """AI router — endpoints for app generation and query suggestion."""
 
-from __future__ import annotations
-
 import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,8 +17,10 @@ from app.ai.schemas import (
     SuggestedQuery,
 )
 from app.auth.dependencies import get_current_user
+from app.config import settings
 from app.db import get_db_session
 from app.models import DataSource, User
+from app.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,9 @@ def _datasource_info(ds: DataSource) -> str:
     status_code=status.HTTP_200_OK,
     summary="Generate an app layout from a natural-language prompt",
 )
+@limiter.limit(settings.ai_rate_limit_generate)
 async def generate_app(
+    request: Request,
     body: GenerateAppRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
@@ -96,7 +98,9 @@ async def generate_app(
     status_code=status.HTTP_200_OK,
     summary="Suggest a query for a datasource based on a natural-language goal",
 )
+@limiter.limit(settings.ai_rate_limit_suggest)
 async def suggest_query(
+    request: Request,
     body: SuggestQueryRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),

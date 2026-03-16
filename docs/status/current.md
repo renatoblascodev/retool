@@ -6,53 +6,88 @@
 
 ## Em Progresso
 
-- Nenhum item aberto. Sprint 5 completo.
+**Sprint 6 — Templates, Runtime Engine e Publish** (2026-03-17 → 2026-03-31)
 
-## Sprint 5 — Concluído
+| US     | Descrição                            | Agente                     | Status     |
+|--------|--------------------------------------|----------------------------|------------|
+| US-400 | Runtime engine com data binding      | frontend-react-mobile      | 🔲 Não iniciado |
+| US-401 | Execução de queries no runtime       | python-senior + frontend   | 🔲 Não iniciado |
+| US-410 | Backend de templates                 | python-integrations-senior | 🔲 Não iniciado |
+| US-411 | Template picker (frontend)           | frontend-react-mobile      | 🔲 Não iniciado |
+| US-420 | Backend de publish                   | python-integrations-senior | 🔲 Não iniciado |
+| US-421 | Botão Publish no builder             | frontend-react-mobile      | 🔲 Não iniciado |
+| US-430 | Rate limiting endpoints AI           | python-integrations-senior | 🔲 Não iniciado |
+| US-431 | Remediação SEC-007 sandbox           | python-integrations-senior | 🔲 Não iniciado |
+| US-432 | CI GitHub Actions + cobertura        | devops + qa                | 🔲 Não iniciado |
+
+Documentação de sprint: `docs/plan/SPRINT6-BACKLOG.md` e `docs/plan/SPRINT6-EXECUTION-SEQUENCE.md`
+
+## Sprint 5 — Concluído ✅ (commit f0c47e4)
+
+**125 testes backend passando | 0 erros TypeScript | 16 novos specs E2E**
 
 ### Backend
 
-- **AI module** (`app/ai/`): endpoints `POST /api/ai/generate-app` e `POST /api/ai/suggest-query` implementados com LiteLLM.
-- **JS Transform sandbox** (`app/queries/transform.py`): sandbox RestrictedPython com timeout de 2s via thread daemon. Integrado ao `POST /api/queries/execute` via campo `transform_js`.
-- **Testes backend**: 113 testes passando (101 pré-Sprint 5 + 12 de transform sandbox + 14 de AI endpoints → totalizando 113 com sobreposição de fixture).
+- **AI module** (`app/ai/`): `POST /api/ai/generate-app` e `POST /api/ai/suggest-query` com LiteLLM.
+- **JS Transform sandbox** (`app/queries/transform.py`): RestrictedPython com timeout 2s.
+- **Email invites** (`app/invites/`): `app_invites` table, tokens, SMTP/console, migration 0005.
+- **Testes backend**: 125 testes passando (inclui 12 de invites, 16 de AI, sandbox, etc.).
 
 ### Frontend
 
-- **AI Prompt Panel**: botão "Generate" com ícone Sparkles no `BuilderHeader`, drawer lateral `AIPromptPanel.tsx` com textarea de prompt, select de datasource, e exibição do resultado da IA.
-- **Transform (Python) editor**: seção colapsável `<details>` na `QueryPanel` com textarea para scripts de transformação de resultado. Campo `transform_js` é enviado ao backend na execução da query.
+- **Monaco Editor**: editor JS na `QueryPanel`, linguagem `javascript`.
+- **AI Prompt Panel**: `AIPromptPanel.tsx` com geração de layouts via LLM.
+- **InviteAcceptPage**: rota pública `/invites/accept?token=`, estados auth/unauth.
+- **E2E specs**: `ai-generation.spec.ts`, `js-transform.spec.ts`, `invite-flow.spec.ts`.
 - **0 erros TypeScript**, build Vite limpo.
 
-## Status das US do MVP + Sprint 5
+## Status das US — Sprint 1-5 (Concluído) + Sprint 6 (Em Progresso)
 
-| US    | Feature                          | Status |
-|-------|----------------------------------|--------|
-| US-001 | Auth/login                     | ✅ |
-| US-002 | Empty state CTA                | ✅ |
-| US-010 | Criar app                      | ✅ |
-| US-011 | Criar página                   | ✅ |
-| US-020 | Adicionar Table widget         | ✅ |
-| US-021 | Editar propriedades            | ✅ |
-| US-030 | Criar datasource REST          | ✅ |
-| US-031 | Criar e executar query         | ✅ |
-| US-040 | Bindar query na tabela         | ✅ |
-| US-041 | Abrir preview                  | ✅ |
-| US-050 | Ambiente local completo        | ✅ |
-| US-051 | Smoke test + testes backend    | ✅ |
-| US-201 | RBAC (owner/viewer)            | ✅ |
-| US-203 | Redirect viewer para runtime   | ✅ |
-| US-210 | SQL datasource                 | ✅ |
-| US-211 | GraphQL datasource             | ✅ |
-| US-212 | Rotação de credenciais         | ✅ |
-| US-301 | AI generate-app endpoint       | ✅ |
-| US-302 | AI Prompt Panel (frontend)     | ✅ |
-| US-311 | Transform sandbox (backend)    | ✅ |
-| US-312 | Transform editor (frontend)    | ✅ |
+| US     | Feature                          | Sprint | Status |
+|--------|----------------------------------|--------|--------|
+| US-001 | Auth/login                       | 1      | ✅ |
+| US-002 | Empty state CTA                  | 1      | ✅ |
+| US-010 | Criar app                        | 1      | ✅ |
+| US-011 | Criar página                     | 1      | ✅ |
+| US-020 | Adicionar Table widget           | 1      | ✅ |
+| US-021 | Editar propriedades              | 1      | ✅ |
+| US-030 | Criar datasource REST            | 1      | ✅ |
+| US-031 | Criar e executar query           | 1      | ✅ |
+| US-040 | Bindar query na tabela           | 1      | ✅ |
+| US-041 | Abrir preview                    | 1      | ✅ |
+| US-050 | Ambiente local completo          | 1      | ✅ |
+| US-051 | Smoke test + testes backend      | 1      | ✅ |
+| US-201 | RBAC (owner/editor/viewer)       | 4      | ✅ |
+| US-203 | Redirect viewer para runtime     | 4      | ✅ |
+| US-210 | SQL datasource                   | 4      | ✅ |
+| US-211 | GraphQL datasource               | 4      | ✅ |
+| US-212 | Rotação de credenciais           | 4      | ✅ |
+| US-300 | AI generate-app endpoint         | 5      | ✅ |
+| US-301 | AI suggest-query endpoint        | 5      | ✅ |
+| US-302 | AI Prompt Panel (frontend)       | 5      | ✅ |
+| US-310 | JS Transform sandbox (backend)   | 5      | ✅ |
+| US-311 | Monaco editor (frontend)         | 5      | ✅ |
+| US-320 | Email invites backend            | 5      | ✅ |
+| US-321 | InviteAcceptPage frontend        | 5      | ✅ |
+| US-330 | Security review (SEC-004~008)    | 5      | ✅ |
+| US-331 | E2E specs (AI, transform, invite)| 5      | ✅ |
+| US-400 | Runtime data binding             | 6      | 🔲 |
+| US-401 | Queries execution no runtime     | 6      | 🔲 |
+| US-410 | Templates backend                | 6      | 🔲 |
+| US-411 | Template picker frontend         | 6      | 🔲 |
+| US-420 | Publish backend                  | 6      | 🔲 |
+| US-421 | Publish button frontend          | 6      | 🔲 |
+| US-430 | Rate limiting AI endpoints       | 6      | 🔲 |
+| US-431 | SEC-007 sandbox resource limits  | 6      | 🔲 |
+| US-432 | CI GitHub Actions + cobertura    | 6      | 🔲 |
 
 ## Riscos Ativos
 
-- `SEC-003` RBAC de escopos finos: isolamento por `owner_id` e role suficiente para MVP.
-- Transform sandbox usa RestrictedPython (Python puro); não permite JS real — nome renomeado para "Transform (Python)" na UI.
-- Rotação de chave de criptografia (`DATASOURCE_ENCRYPTION_KEY`) ainda não automatizada para produção.
+| ID      | Risco                                     | Severidade | Status |
+|---------|-------------------------------------------|------------|--------|
+| SEC-003 | RBAC escopos finos                       | médio      | open   |
+| SEC-007 | Sandbox resource exhaustion (RLIMIT_AS)  | major      | open → Sprint 6 |
+| SEC-008 | Invite token via URL query param         | baixo      | open → Sprint 6 |
 
 
 ## Em Progresso

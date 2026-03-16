@@ -1,9 +1,11 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.ai.router import router as ai_router
 from app.apps.members_router import router as members_router
@@ -14,10 +16,14 @@ from app.datasources.router import router as datasources_router
 from app.db import init_db
 from app.invites.router import router as invites_router
 from app.pages.router import router as pages_router
+from app.publish.router import public_router, router as publish_router
 from app.queries.router import router as queries_router
+from app.rate_limit import limiter
 from app.templates.router import router as templates_router
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,6 +53,8 @@ app.include_router(pages_router, prefix=settings.api_v1_prefix)
 app.include_router(datasources_router, prefix=settings.api_v1_prefix)
 app.include_router(queries_router, prefix=settings.api_v1_prefix)
 app.include_router(templates_router, prefix=settings.api_v1_prefix)
+app.include_router(publish_router, prefix=settings.api_v1_prefix)
+app.include_router(public_router, prefix=settings.api_v1_prefix)
 
 # ── SPA static serving (only active in release image) ────────────
 # When Dockerfile.release is used the compiled frontend is at /app/static.
