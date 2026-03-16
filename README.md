@@ -1,6 +1,19 @@
 # ToolStack AI
 
+[![CI](https://github.com/codigovalor/retool/actions/workflows/ci.yml/badge.svg)](https://github.com/codigovalor/retool/actions/workflows/ci.yml)
+
 ToolStack AI e um builder de ferramentas internas com foco em apps administrativos, queries e automacoes assistidas por IA.
+
+## Get started
+
+O caminho mais rapido para ter o ambiente pronto e pelo Dev Container (requer VS Code + Docker):
+
+1. Instale [VS Code](https://code.visualstudio.com) e a extensao **Dev Containers**.
+2. Clone o repositorio: `git clone https://github.com/codigovalor/retool && cd retool`
+3. Abra no VS Code e aceite **"Reopen in Container"** — o ambiente sera configurado automaticamente.
+4. Dentro do container, inicie os servicos: `docker compose -f infra/docker-compose.yml up -d`
+5. Acesse o builder em `http://localhost:5173` e a API em `http://localhost:8000/docs`.
+
 
 ## Estrutura
 

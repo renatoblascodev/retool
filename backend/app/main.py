@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.apps.members_router import router as members_router
 from app.apps.router import router as apps_router
@@ -39,3 +43,16 @@ app.include_router(pages_router, prefix=settings.api_v1_prefix)
 app.include_router(datasources_router, prefix=settings.api_v1_prefix)
 app.include_router(queries_router, prefix=settings.api_v1_prefix)
 app.include_router(templates_router, prefix=settings.api_v1_prefix)
+
+# ── SPA static serving (only active in release image) ────────────
+# When Dockerfile.release is used the compiled frontend is at /app/static.
+# API routes registered above take precedence; this is a catch-all fallback.
+_static_dir = Path(__file__).parent.parent / "static"
+if _static_dir.is_dir():
+    _assets_dir = _static_dir / "assets"
+    if _assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="spa-assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str) -> FileResponse:  # noqa: ARG001
+        return FileResponse(_static_dir / "index.html")
