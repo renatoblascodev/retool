@@ -71,9 +71,7 @@ async def create_datasource(
     db: AsyncSession = Depends(get_db_session),
 ) -> DataSourceResponse:
     encrypted_auth_config = (
-        {}
-        if payload.auth_type == "none"
-        else encrypt_auth_config(payload.auth_config)
+        {} if payload.auth_type == "none" else encrypt_auth_config(payload.auth_config)
     )
 
     datasource = DataSource(
@@ -121,9 +119,7 @@ async def update_datasource(
 
     if "auth_config" in data:
         data["auth_config"] = (
-            {}
-            if next_auth_type == "none"
-            else encrypt_auth_config(data["auth_config"])
+            {} if next_auth_type == "none" else encrypt_auth_config(data["auth_config"])
         )
     elif "auth_type" in data and next_auth_type == "none":
         data["auth_config"] = {}

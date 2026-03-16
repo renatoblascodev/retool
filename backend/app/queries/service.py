@@ -1,4 +1,6 @@
+import asyncio
 import ipaddress
+import socket
 from urllib.parse import urljoin, urlparse
 
 import httpx
@@ -88,7 +90,7 @@ class QueryService:
                 endpoint.lstrip("/"),
             )
 
-        self._validate_url(request_url)
+        await self._validate_url(request_url)
 
         headers: dict[str, str] = dict(payload.config.get("headers") or {})
         if auth_type == "bearer" and auth_config.get("token"):
@@ -139,7 +141,7 @@ class QueryService:
             },
         )
 
-    def _validate_url(self, request_url: str) -> None:
+    async def _validate_url(self, request_url: str) -> None:
         parsed = urlparse(request_url)
         if parsed.scheme not in {"http", "https"}:
             raise HTTPException(
@@ -159,6 +161,17 @@ class QueryService:
         if settings.environment == "development":
             return
 
+        # Allowlist: if configured, only hosts in the list are permitted.
+        allow_hosts = settings.ssrf_allow_hosts
+        if allow_hosts:
+            if hostname.lower() not in {h.lower() for h in allow_hosts}:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Host not in SSRF allowlist",
+                )
+            return
+
+        # Block literal private IP addresses.
         try:
             ip_addr = ipaddress.ip_address(hostname)
             if (
@@ -174,9 +187,42 @@ class QueryService:
         except ValueError:
             pass
 
+        # Block reserved local hostnames.
         lowered = hostname.lower()
         if lowered == "localhost" or lowered.endswith(".local"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Local hostnames are blocked",
             )
+
+        # DNS rebinding protection: resolve hostname and reject if any
+        # resolved address is private/loopback/link-local.
+        try:
+            infos = await asyncio.to_thread(
+                socket.getaddrinfo,
+                hostname,
+                None,
+                socket.AF_UNSPEC,
+                socket.SOCK_STREAM,
+            )
+        except OSError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Hostname could not be resolved",
+            )
+
+        for info in infos:
+            raw_ip = info[4][0]
+            try:
+                ip_addr = ipaddress.ip_address(raw_ip)
+                if (
+                    ip_addr.is_private
+                    or ip_addr.is_loopback
+                    or ip_addr.is_link_local
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Hostname resolves to a private network address",
+                    )
+            except ValueError:
+                pass

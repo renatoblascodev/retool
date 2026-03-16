@@ -60,9 +60,7 @@ async def list_pages(
 ) -> list[PageResponse]:
     await _get_owned_app(app_id, db, current_user.id)
     rows = await db.scalars(
-        select(Page)
-        .where(Page.app_id == app_id)
-        .order_by(Page.created_at.desc()),
+        select(Page).where(Page.app_id == app_id).order_by(Page.created_at.desc()),
     )
     return [PageResponse.model_validate(row) for row in rows]
 

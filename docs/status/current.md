@@ -2,7 +2,56 @@
 
 ## Data
 
-2026-03-13
+2026-03-15
+
+## Em Progresso
+
+- Nenhum item aberto. MVP completo.
+
+## Concluído Recentemente
+
+- US-030 Datasource CRUD UI:
+  - `DataSourcePanel.tsx` criado com formulário de create (nome, base URL, auth type/token/basic) e lista com delete.
+  - `useBuilderOrchestrator` estendido com estado e handlers de datasource.
+  - `BuilderWorkspace` renderiza `DataSourcePanel` no grid de painéis.
+- US-002 Empty State:
+  - `EmptyState.tsx` criado — CTA centralizado com formulário de criação de app.
+  - Canvas renderiza `EmptyState` quando `apps.length === 0 && !appsLoading`.
+  - CSS `.empty-state*` adicionado ao `styles.css`.
+- Cobertura de testes ampliada (Sprint 2):
+  - 12 testes de integração em `backend/tests/test_datasource_router.py` (via `TestClient` + dependency overrides).
+  - 5 testes E2E em `frontend/tests/e2e/datasource-crud.spec.ts`.
+  - 4 testes E2E em `frontend/tests/e2e/empty-state.spec.ts`.
+  - Totais: 17 testes backend / 21 unit / 11 E2E — todos passando.
+- Bug fix: `apiRequest` crashava em respostas 204 No Content ao chamar `.json()`. Corrigido em `frontend/src/lib/api.ts`.
+
+## Status das US do MVP
+
+| US    | Feature                  | Status |
+|-------|--------------------------|--------|
+| US-001 | Auth/login              | ✅ |
+| US-002 | Empty state CTA         | ✅ |
+| US-010 | Criar app               | ✅ |
+| US-011 | Criar página            | ✅ |
+| US-020 | Adicionar Table widget  | ✅ |
+| US-021 | Editar propriedades     | ✅ |
+| US-030 | Criar datasource REST   | ✅ |
+| US-031 | Criar e executar query  | ✅ |
+| US-040 | Bindar query na tabela  | ✅ |
+| US-041 | Abrir preview           | ✅ |
+| US-050 | Ambiente local completo | ✅ |
+| US-051 | Smoke test + testes backend | ✅ |
+
+## Próximos Passos
+
+- Nenhum item de backlog MVP aberto.
+- Próxima decisão de produto: Sprint 3 (pós-MVP) — RBAC, rotação de chave, SQL datasource, templates.
+
+## Riscos Ativos
+
+- `SEC-003` Sem RBAC/escopos finos: isolamento por `owner_id` protege MVP interno; não bloqueante.
+- Rotação de chave de criptografia (`DATASOURCE_ENCRYPTION_KEY`) ainda não automatizada para produção.
+
 
 ## Em Progresso
 

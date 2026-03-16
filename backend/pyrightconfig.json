@@ -2,6 +2,7 @@
   "include": [
     "app"
   ],
+  "pythonVersion": "3.10",
   "executionEnvironments": [
     {
       "root": ".",

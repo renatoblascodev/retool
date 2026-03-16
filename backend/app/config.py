@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60
     datasource_encryption_key: str | None = None
+    ssrf_allow_hosts: list[str] = []
 
 
 @lru_cache

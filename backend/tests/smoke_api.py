@@ -26,10 +26,7 @@ def _assert_status(
 ) -> None:
     if response.status_code not in expected:
         raise SmokeTestError(
-            (
-                f"{step} failed with status "
-                f"{response.status_code}: {response.text}"
-            ),
+            (f"{step} failed with status {response.status_code}: {response.text}"),
         )
 
 

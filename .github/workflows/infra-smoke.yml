@@ -1,0 +1,96 @@
+name: Infra Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'infra/**'
+      - '.github/workflows/infra-smoke.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'infra/**'
+      - '.github/workflows/infra-smoke.yml'
+
+concurrency:
+  group: infra-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Docker Compose Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start postgres and redis
+        run: docker compose -f infra/docker-compose.yml up -d postgres redis
+
+      - name: Wait for postgres to be ready
+        run: |
+          for i in $(seq 1 20); do
+            if docker compose -f infra/docker-compose.yml exec -T postgres \
+                pg_isready -U toolstack -d toolstack -q; then
+              echo "Postgres ready after $((i * 2))s"
+              break
+            fi
+            echo "Attempt $i/20 — waiting 2s..."
+            sleep 2
+            if [ "$i" -eq 20 ]; then
+              echo "Postgres did not become ready in 40s"
+              docker compose -f infra/docker-compose.yml logs postgres
+              exit 1
+            fi
+          done
+
+      - name: Run database migrations
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm \
+            -e DATABASE_URL=postgresql+asyncpg://toolstack:toolstack_secret@postgres:5432/toolstack \
+            backend alembic upgrade head
+
+      - name: Start backend service
+        run: docker compose -f infra/docker-compose.yml up -d backend
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health; then
+              echo ""
+              echo "Backend is healthy after $((i * 3))s"
+              exit 0
+            fi
+            echo "Attempt $i/30 — waiting 3s..."
+            sleep 3
+          done
+          echo "Backend did not become healthy in 90s"
+          docker compose -f infra/docker-compose.yml logs backend
+          exit 1
+
+      - name: Smoke — GET /health returns ok
+        run: |
+          RESPONSE=$(curl -sf http://localhost:8000/health)
+          echo "$RESPONSE"
+          echo "$RESPONSE" | grep -q '"status":"ok"'
+
+      - name: Smoke — POST /api/auth/login with wrong creds returns 401
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8000/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"nobody@example.com","password":"wrong"}')
+          echo "HTTP $STATUS"
+          [ "$STATUS" -eq 401 ] || [ "$STATUS" -eq 422 ]
+
+      - name: Capture logs on failure
+        if: failure()
+        run: docker compose -f infra/docker-compose.yml logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f infra/docker-compose.yml down -v

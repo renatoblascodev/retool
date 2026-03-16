@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -17,7 +17,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(subject: str) -> str:
-    expire_at = datetime.now(UTC) + timedelta(
+    expire_at = datetime.now(timezone.utc) + timedelta(
         minutes=settings.jwt_access_token_expire_minutes,
     )
     payload = {"sub": subject, "exp": expire_at}
