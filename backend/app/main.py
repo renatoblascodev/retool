@@ -12,6 +12,7 @@ from app.auth.router import router as auth_router
 from app.config import settings
 from app.datasources.router import router as datasources_router
 from app.db import init_db
+from app.invites.router import router as invites_router
 from app.pages.router import router as pages_router
 from app.queries.router import router as queries_router
 from app.templates.router import router as templates_router
@@ -41,6 +42,7 @@ app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(ai_router, prefix=f"{settings.api_v1_prefix}/ai")
 app.include_router(apps_router, prefix=settings.api_v1_prefix)
 app.include_router(members_router, prefix=settings.api_v1_prefix)
+app.include_router(invites_router, prefix=settings.api_v1_prefix)
 app.include_router(pages_router, prefix=settings.api_v1_prefix)
 app.include_router(datasources_router, prefix=settings.api_v1_prefix)
 app.include_router(queries_router, prefix=settings.api_v1_prefix)
