@@ -39,7 +39,8 @@ def _to_response(datasource: DataSource) -> DataSourceResponse:
         id=datasource.id,
         owner_id=datasource.owner_id,
         name=datasource.name,
-        base_url=datasource.base_url,
+        ds_type=getattr(datasource, "ds_type", None) or "rest",
+        base_url=datasource.base_url or "",
         auth_type=datasource.auth_type,
         has_auth_config=bool(datasource.auth_config),
         created_at=datasource.created_at,
@@ -70,13 +71,17 @@ async def create_datasource(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> DataSourceResponse:
-    encrypted_auth_config = (
-        {} if payload.auth_type == "none" else encrypt_auth_config(payload.auth_config)
-    )
+    # SQL datasources always encrypt auth_config (holds DB credentials).
+    # REST datasources only encrypt when auth_type != "none".
+    if payload.ds_type == "sql" or payload.auth_type != "none":
+        encrypted_auth_config = encrypt_auth_config(payload.auth_config)
+    else:
+        encrypted_auth_config = {}
 
     datasource = DataSource(
         owner_id=current_user.id,
         name=payload.name,
+        ds_type=payload.ds_type,
         base_url=payload.base_url,
         auth_type=payload.auth_type,
         auth_config=encrypted_auth_config,
@@ -119,7 +124,9 @@ async def update_datasource(
 
     if "auth_config" in data:
         data["auth_config"] = (
-            {} if next_auth_type == "none" else encrypt_auth_config(data["auth_config"])
+            {}
+            if next_auth_type == "none"
+            else encrypt_auth_config(data["auth_config"])
         )
     elif "auth_type" in data and next_auth_type == "none":
         data["auth_config"] = {}

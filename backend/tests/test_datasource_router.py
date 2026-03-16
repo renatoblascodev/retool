@@ -32,6 +32,7 @@ def _make_datasource(
     ds_id: str | None = None,
     owner_id: str = "user-1",
     name: str = "Test API",
+    ds_type: str = "rest",
     base_url: str = "https://api.test",
     auth_type: str = "none",
     auth_config: dict | None = None,
@@ -44,6 +45,7 @@ def _make_datasource(
         auth_config=auth_config or {},
     )
     ds.id = ds_id or str(uuid4())
+    ds.ds_type = ds_type
     ds.created_at = datetime(2026, 1, 1)
     ds.updated_at = datetime(2026, 1, 1)
     return ds
@@ -98,6 +100,9 @@ class _FakeSession:
             obj.created_at = datetime(2026, 1, 1)
         if not getattr(obj, "updated_at", None):
             obj.updated_at = datetime(2026, 1, 1)
+        # Simulate server_default for ds_type column.
+        if not getattr(obj, "ds_type", None):
+            obj.ds_type = "rest"
 
     async def delete(self, obj) -> None:  # type: ignore[no-untyped-def]
         self.deleted.append(obj)
@@ -156,6 +161,8 @@ class ListDatasourcesTests(unittest.TestCase):
         self.assertIn("base_url", item)
         self.assertIn("auth_type", item)
         self.assertIn("has_auth_config", item)
+        self.assertIn("ds_type", item)
+        self.assertEqual(item["ds_type"], "rest")
         self.assertTrue(item["has_auth_config"])
         # Raw auth credentials must never appear in the response.
         self.assertNotIn("auth_config", item)
