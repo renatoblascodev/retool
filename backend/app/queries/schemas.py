@@ -7,6 +7,7 @@ class QueryExecuteRequest(BaseModel):
     datasource_id: str | None = None
     config: dict = Field(default_factory=dict)
     variables: dict = Field(default_factory=dict)
+    transform_js: str | None = None
 
 
 class QueryExecuteResponse(BaseModel):

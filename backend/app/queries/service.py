@@ -13,6 +13,7 @@ from app.datasources.secrets import decrypt_auth_config
 from app.models import DataSource
 from app.queries.schemas import QueryExecuteRequest
 from app.queries.sql_executor import execute_sql
+from app.queries.transform import run_transform
 
 
 class QueryService:
@@ -24,11 +25,13 @@ class QueryService:
     ) -> tuple[dict | list, int, dict]:
         # --- SQL path ---------------------------------------------------
         if payload.type == "sql":
-            return await self._execute_sql(payload, user_id, db)
+            data, status_code, meta = await self._execute_sql(payload, user_id, db)
+            return self._apply_transform(payload.transform_js, data), status_code, meta
 
         # --- GraphQL path -----------------------------------------------
         if payload.type == "graphql":
-            return await self._execute_graphql(payload, user_id, db)
+            data, status_code, meta = await self._execute_graphql(payload, user_id, db)
+            return self._apply_transform(payload.transform_js, data), status_code, meta
 
         # --- REST path --------------------------------------------------
         if payload.type != "rest":
@@ -73,28 +76,29 @@ class QueryService:
             if not base_url:
                 # Backward-compatible local mock when no datasource/base_url
                 # is provided.
-                return (
-                    {
-                        "query": payload.name or "unnamed_query",
-                        "type": payload.type,
-                        "request": {
-                            "method": method,
-                            "endpoint": endpoint,
-                            "variables": payload.variables,
-                        },
-                        "rows": [
-                            {
-                                "id": 1,
-                                "name": "Alice",
-                                "email": "alice@example.com",
-                            },
-                            {
-                                "id": 2,
-                                "name": "Bob",
-                                "email": "bob@example.com",
-                            },
-                        ],
+                mock_data: dict | list = {
+                    "query": payload.name or "unnamed_query",
+                    "type": payload.type,
+                    "request": {
+                        "method": method,
+                        "endpoint": endpoint,
+                        "variables": payload.variables,
                     },
+                    "rows": [
+                        {
+                            "id": 1,
+                            "name": "Alice",
+                            "email": "alice@example.com",
+                        },
+                        {
+                            "id": 2,
+                            "name": "Bob",
+                            "email": "bob@example.com",
+                        },
+                    ],
+                }
+                return (
+                    self._apply_transform(payload.transform_js, mock_data),
                     200,
                     {"mode": "mock"},
                 )
@@ -143,7 +147,7 @@ class QueryService:
             data = {"raw": response.text}
 
         return (
-            data,
+            self._apply_transform(payload.transform_js, data),
             response.status_code,
             {
                 "mode": "rest",
@@ -153,6 +157,30 @@ class QueryService:
                 },
             },
         )
+
+    def _apply_transform(self, transform_js: str | None, data: dict | list) -> dict | list:
+        """Apply optional JS transform script to query result data.
+
+        Raises HTTPException(400) on script error, HTTPException(408) on timeout.
+        """
+        if not transform_js:
+            return data
+        try:
+            result = run_transform(transform_js, data)
+        except TimeoutError:
+            raise HTTPException(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                detail={"error": "transform_timeout"},
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "transform_error", "detail": str(exc)},
+            )
+        # Ensure the result is a dict or list (safe return type)
+        if not isinstance(result, (dict, list)):
+            result = {"value": result}
+        return result
 
     async def _execute_sql(
         self,

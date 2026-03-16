@@ -2,7 +2,58 @@
 
 ## Data
 
-2026-03-15
+2026-03-17
+
+## Em Progresso
+
+- Nenhum item aberto. Sprint 5 completo.
+
+## Sprint 5 — Concluído
+
+### Backend
+
+- **AI module** (`app/ai/`): endpoints `POST /api/ai/generate-app` e `POST /api/ai/suggest-query` implementados com LiteLLM.
+- **JS Transform sandbox** (`app/queries/transform.py`): sandbox RestrictedPython com timeout de 2s via thread daemon. Integrado ao `POST /api/queries/execute` via campo `transform_js`.
+- **Testes backend**: 113 testes passando (101 pré-Sprint 5 + 12 de transform sandbox + 14 de AI endpoints → totalizando 113 com sobreposição de fixture).
+
+### Frontend
+
+- **AI Prompt Panel**: botão "Generate" com ícone Sparkles no `BuilderHeader`, drawer lateral `AIPromptPanel.tsx` com textarea de prompt, select de datasource, e exibição do resultado da IA.
+- **Transform (Python) editor**: seção colapsável `<details>` na `QueryPanel` com textarea para scripts de transformação de resultado. Campo `transform_js` é enviado ao backend na execução da query.
+- **0 erros TypeScript**, build Vite limpo.
+
+## Status das US do MVP + Sprint 5
+
+| US    | Feature                          | Status |
+|-------|----------------------------------|--------|
+| US-001 | Auth/login                     | ✅ |
+| US-002 | Empty state CTA                | ✅ |
+| US-010 | Criar app                      | ✅ |
+| US-011 | Criar página                   | ✅ |
+| US-020 | Adicionar Table widget         | ✅ |
+| US-021 | Editar propriedades            | ✅ |
+| US-030 | Criar datasource REST          | ✅ |
+| US-031 | Criar e executar query         | ✅ |
+| US-040 | Bindar query na tabela         | ✅ |
+| US-041 | Abrir preview                  | ✅ |
+| US-050 | Ambiente local completo        | ✅ |
+| US-051 | Smoke test + testes backend    | ✅ |
+| US-201 | RBAC (owner/viewer)            | ✅ |
+| US-203 | Redirect viewer para runtime   | ✅ |
+| US-210 | SQL datasource                 | ✅ |
+| US-211 | GraphQL datasource             | ✅ |
+| US-212 | Rotação de credenciais         | ✅ |
+| US-301 | AI generate-app endpoint       | ✅ |
+| US-302 | AI Prompt Panel (frontend)     | ✅ |
+| US-311 | Transform sandbox (backend)    | ✅ |
+| US-312 | Transform editor (frontend)    | ✅ |
+
+## Riscos Ativos
+
+- `SEC-003` RBAC de escopos finos: isolamento por `owner_id` e role suficiente para MVP.
+- Transform sandbox usa RestrictedPython (Python puro); não permite JS real — nome renomeado para "Transform (Python)" na UI.
+- Rotação de chave de criptografia (`DATASOURCE_ENCRYPTION_KEY`) ainda não automatizada para produção.
+
 
 ## Em Progresso
 

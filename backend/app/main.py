@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.ai.router import router as ai_router
 from app.apps.members_router import router as members_router
 from app.apps.router import router as apps_router
 from app.auth.router import router as auth_router
@@ -37,6 +38,7 @@ async def on_startup() -> None:
 
 
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
+app.include_router(ai_router, prefix=f"{settings.api_v1_prefix}/ai")
 app.include_router(apps_router, prefix=settings.api_v1_prefix)
 app.include_router(members_router, prefix=settings.api_v1_prefix)
 app.include_router(pages_router, prefix=settings.api_v1_prefix)
