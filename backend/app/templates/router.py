@@ -2,17 +2,20 @@
 from __future__ import annotations
 
 import json
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.apps.schemas import AppResponse
 from app.auth.dependencies import get_current_user
 from app.db import get_db_session
 from app.models import AppMember, Page, Template, ToolApp, User
-from app.templates.schemas import AppFromTemplateRequest, SEED_TEMPLATES, TemplateResponse
+from app.templates.schemas import (
+    AppFromTemplateRequest,
+    SEED_TEMPLATES,
+    TemplateResponse,
+)
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -29,11 +32,15 @@ async def _ensure_seeds(db: AsyncSession) -> None:
 
 @router.get("", response_model=list[TemplateResponse])
 async def list_templates(
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[TemplateResponse]:
     await _ensure_seeds(db)
-    rows = await db.scalars(select(Template).order_by(Template.name))
+    rows = await db.scalars(
+        select(Template)
+        .where(or_(Template.is_public.is_(True), Template.creator_id == current_user.id))
+        .order_by(Template.name)
+    )
     return [TemplateResponse.model_validate(t) for t in rows]
 
 

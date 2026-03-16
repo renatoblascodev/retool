@@ -30,6 +30,7 @@ def _make_template(slug: str = "crud-table", name: str = "CRUD Table") -> Templa
         description="A test template",
         category="data",
         layout_json=json.dumps({"widgets": [], "queries": []}),
+        is_public=True,
     )
     t.id = str(uuid4())
     t.created_at = datetime(2026, 1, 1)

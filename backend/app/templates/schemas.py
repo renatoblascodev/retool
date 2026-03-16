@@ -12,12 +12,18 @@ class TemplateResponse(BaseModel):
     name: str
     description: str | None
     category: str
+    is_public: bool = True
 
 
 class AppFromTemplateRequest(BaseModel):
     template_slug: str
     name: str = Field(min_length=2, max_length=120)
     description: str | None = Field(default=None, max_length=2000)
+
+
+class SaveAsTemplateRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    category: str = Field(default="general", max_length=60)
 
 
 # ── Built-in template definitions ────────────────────────────────────────────

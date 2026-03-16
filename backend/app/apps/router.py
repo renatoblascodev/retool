@@ -5,8 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.apps.schemas import AppCreateRequest, AppResponse, AppUpdateRequest
 from app.auth.dependencies import get_current_user
 from app.db import get_db_session
-from app.models import AppMember, ToolApp, User
+from app.models import AppMember, Page, Template, ToolApp, User
 from app.permissions.dependencies import require_role
+from app.templates.schemas import SaveAsTemplateRequest, TemplateResponse
+
+from uuid import uuid4
+import json
 
 router = APIRouter(prefix="/apps", tags=["apps"])
 
@@ -143,3 +147,37 @@ async def delete_app(
     tool_app = await _get_owned_app(app_id, db, current_user.id)
     await db.delete(tool_app)
     await db.commit()
+
+
+@router.post(
+    "/{app_id}/as-template",
+    response_model=TemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def save_as_template(
+    app_id: str,
+    payload: SaveAsTemplateRequest,
+    _: AppMember = Depends(require_role("owner")),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> TemplateResponse:
+    """Capture the first page layout and save it as a private template (owner only)."""
+    page = await db.scalar(
+        select(Page).where(Page.app_id == app_id).order_by(Page.created_at).limit(1)
+    )
+    layout_json = json.dumps(page.layout_json) if page and page.layout_json else "{}"
+
+    slug = f"user-{current_user.id[:8]}-{str(uuid4())[:8]}"
+    tmpl = Template(
+        id=str(uuid4()),
+        slug=slug,
+        name=payload.name,
+        category=payload.category,
+        layout_json=layout_json,
+        is_public=False,
+        creator_id=current_user.id,
+    )
+    db.add(tmpl)
+    await db.commit()
+    await db.refresh(tmpl)
+    return TemplateResponse.model_validate(tmpl)
